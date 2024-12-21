@@ -12,7 +12,7 @@ co2 = 400
 temp = 25
 hum = 50
 
-async def mesure(event):
+async def mesure():
     if scd4.data_ready:
         try:
             global co2, temp, hum
@@ -21,10 +21,8 @@ async def mesure(event):
             hum = round(scd4.relative_humidity, 1)
         except:
             pass
-    await event.wait()
-    event.clear()
 
-async def affichage(co2,temp,hum):
+async def oled_display(co2,temp,hum):
     #### display the data on the oled
     lcd.fill(0)
     lcd.text("{}".format(co2), 50,20, 1)
@@ -34,10 +32,7 @@ async def affichage(co2,temp,hum):
 
 async def main():
     while 1:
-        event = uasyncio.Event()
-        uasyncio.create_task(mesure(event))
-        event.set()
-        uasyncio.create_task(affichage(co2,temp,hum))
-        await uasyncio.sleep_ms(5500)        
+        uasyncio.create_task(mesure())
+        uasyncio.create_task(oled_display(co2,temp,hum))
+        await uasyncio.sleep_ms(5100)        
 uasyncio.run(main())
-
