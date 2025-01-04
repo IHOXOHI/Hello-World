@@ -8,7 +8,6 @@ from trackball import Trackball
 i2c = I2C(0) 
 scd41 = SCD4X(i2c)
 scd41.start_periodic_measurement()
-#scd30.measurement_interval(5)
 co2 = 400
 temp = 25
 hum = 50
@@ -26,7 +25,7 @@ tft.rotation(1)
 lcd = "on"
 
 
-async def mesure(event,period_ms):
+async def mesure():
     if scd41.data_ready:
         try:
             global co2, temp, hum
@@ -35,10 +34,8 @@ async def mesure(event,period_ms):
             hum = round(scd41.relative_humidity, 1)
         except:
             pass
-    await event.wait()
-    event.clear()
 
-async def affichage(co2,temp,hum,period_ms,state):
+async def affichage(co2,temp,hum,state):
     #### display the data on the prettty lcd
     global lcd
     if lcd == "on":
@@ -58,7 +55,7 @@ async def affichage(co2,temp,hum,period_ms,state):
             tft.text((10, 82), str(temp) + "C", TFT.WHITE, seriffont, 2, nowrap=True)
             tft.text((90, 82), str(hum) + "%", TFT.WHITE, seriffont, 2, nowrap=True)
 
-async def trackball_check(period_ms):
+async def trackball_check():
     global up,down,left,right,state
     down, up, right, left, switch, state = trackball.read()
     #up, down, left, right, switch, state = trackball.read()
@@ -67,14 +64,12 @@ async def trackball_check(period_ms):
 async def main():
     while 1:
         uasyncio.create_task(trackball_check(200))
-        event = uasyncio.Event()
-        uasyncio.create_task(mesure(event,5500))
-        event.set()
-        uasyncio.create_task(affichage(co2,temp,hum,1000,state))
-        uasyncio.create_task(luz(co2,1000,up,down,left,right))
+        uasyncio.create_task(mesure())
+        uasyncio.create_task(affichage(co2,temp,hum,state))
+        uasyncio.create_task(luz(co2,up,down,left,right))
         await uasyncio.sleep_ms(5500)
         
-async def luz(co2,period_ms,up,down,left,right):
+async def luz(co2,up,down,left,right):
     global Luz
     if up >= 10:
         Luz = "on"
